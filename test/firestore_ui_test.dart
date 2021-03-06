@@ -1,47 +1,56 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore_platform_interface/src/method_channel/method_channel_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_core_platform_interface/firebase_core_platform_interface.dart';
 import 'package:firestore_ui/firestore_list.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:cloud_firestore_platform_interface/src/method_channel/method_channel_firestore.dart';
-import 'package:firebase_core_platform_interface/firebase_core_platform_interface.dart';
 
+// todo: fix test
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('FirestoreList', () {
     int mockHandleId = 0;
     final defaultBinaryMessenger =
-        ServicesBinding.instance.defaultBinaryMessenger;
-    StreamController<QuerySnapshot> streamController;
+        ServicesBinding.instance!.defaultBinaryMessenger;
+    StreamController<QuerySnapshot>? streamController;
     final List<MethodCall> log = <MethodCall>[];
-    FirestoreList list;
-    FirebaseApp app;
+    late FirestoreList list;
     FirebaseFirestore firestore;
-    CollectionReference collectionReference;
+    late CollectionReference collectionReference;
     const Map<String, dynamic> kMockDocumentSnapshotData = <String, dynamic>{
       '1': 2
     };
 
     setUp(() async {
-      MethodChannelFirebase.channel.setMockMethodCallHandler(
+      setupCloudFirestoreMocks();
+      // MethodChannelFirebaseFirestore.channel = const MethodChannel(
+      //   'plugins.flutter.io/firebase_firestore',
+      //   StandardMethodCodec(TestFirestoreMessageCodec()),
+      // );
+
+      /*    MethodChannelFirebase.channel.setMockMethodCallHandler(
         (MethodCall methodCall) async {},
       );
+      MethodChannelFirebase.channel.setMockMethodCallHandler((call) => null);
+
       MethodChannelFirebaseFirestore.channel.setMockMethodCallHandler(
         (call) async {},
-      );
+      );*/
 
-      app = await Firebase.initializeApp(
-        name: 'testApp',
+      await Firebase.initializeApp(
         options: FirebaseOptions(
           appId: '1:1234567890:ios:42424242424242',
           messagingSenderId: '1234567890',
+          apiKey: '1234',
+          projectId: 'project',
         ),
       );
 
-      firestore = FirebaseFirestore.instanceFor(app: app);
+      firestore = FirebaseFirestore.instance;
 
       collectionReference = firestore.collection('foo');
 
@@ -54,8 +63,14 @@ void main() {
 
       MethodChannelFirebaseFirestore.channel
           .setMockMethodCallHandler((MethodCall methodCall) async {
+        print('here');
+        print(methodCall);
+        print(methodCall.method);
         log.add(methodCall);
         switch (methodCall.method) {
+          case 'Query#snapshots':
+            print('gotttt');
+            return '1234';
           case 'Query#addSnapshotListener':
             final int handle = mockHandleId++;
             // Wait before sending a message back.
@@ -65,7 +80,7 @@ void main() {
                 MethodChannelFirebaseFirestore.channel.name,
                 MethodChannelFirebaseFirestore.channel.codec.encodeMethodCall(
                   MethodCall('QuerySnapshot', <String, dynamic>{
-                    'app': app.name,
+                    'app': defaultFirebaseAppName,
                     'handle': handle,
                     'paths': <String>["${methodCall.arguments['path']}/0"],
                     'documents': <dynamic>[kMockDocumentSnapshotData],
@@ -154,16 +169,54 @@ void main() {
     });
 
     Future<void> processChange(QuerySnapshot querySnapshot) async {
-      streamController.add(querySnapshot);
+      streamController!.add(querySnapshot);
     }
 
     test('can add to empty list', () async {
+      print('step1');
       expect(collectionReference.id, "foo");
+      print('step2');
       await processChange(await collectionReference.snapshots().first);
+      print('step3');
       expect(list.length, 1);
-      expect(list[0].data, kMockDocumentSnapshotData);
+      expect(list[0]!.data, kMockDocumentSnapshotData);
     });
 
     streamController?.close();
+  });
+}
+
+typedef Callback = void Function(MethodCall call);
+
+void setupCloudFirestoreMocks([Callback? customHandlers]) {
+  MethodChannelFirebase.channel.setMockMethodCallHandler((call) async {
+    if (call.method == 'Firebase#initializeCore') {
+      return [
+        {
+          'name': defaultFirebaseAppName,
+          'options': {
+            'apiKey': '123',
+            'appId': '123',
+            'messagingSenderId': '123',
+            'projectId': '123',
+          },
+          'pluginConstants': {},
+        }
+      ];
+    }
+
+    if (call.method == 'Firebase#initializeApp') {
+      return {
+        'name': call.arguments['appName'],
+        'options': call.arguments['options'],
+        'pluginConstants': {},
+      };
+    }
+
+    if (customHandlers != null) {
+      customHandlers(call);
+    }
+
+    return null;
   });
 }
