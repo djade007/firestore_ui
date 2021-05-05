@@ -4,22 +4,23 @@
 
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart' show Firebase;
 import 'package:firestore_ui/firestore_ui.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 final String title = 'firestore_ui example';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  runApp(MaterialApp(title: title, home: MyHomePage(firestore: FirebaseFirestore.instance)));
+  runApp(MaterialApp(
+      title: title, home: MyHomePage(firestore: FirebaseFirestore.instance)));
 }
 
 class MessageListTile extends StatelessWidget {
   final int index;
-  final DocumentSnapshot document;
+  final DocumentSnapshot<Map<String, dynamic>> document;
   final Function(DocumentSnapshot) onTap;
 
   const MessageListTile({
