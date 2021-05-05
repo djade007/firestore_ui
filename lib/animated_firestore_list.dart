@@ -12,7 +12,7 @@ import 'firestore_list.dart';
 
 typedef Widget FirestoreAnimatedListItemBuilder(
   BuildContext context,
-  DocumentSnapshot? snapshot,
+  DocumentSnapshot<Map<String, dynamic>>? snapshot,
   Animation<double> animation,
   int index,
 );
@@ -42,10 +42,10 @@ class FirestoreAnimatedList extends StatefulWidget {
   }) : super(key: key);
 
   /// A Firestore query to use to populate the animated list
-  final Query query;
+  final Query<Map<String, dynamic>> query;
 
   /// Method that gets called once the stream updates with a new QuerySnapshot
-  final Function(QuerySnapshot)? onLoaded;
+  final Function(QuerySnapshot<Map<String, dynamic>>)? onLoaded;
 
   /// Called before any operation with a DocumentSnapshot;
   /// If it returns `true`, then dismisses that DocumentSnapshot from the list
@@ -221,7 +221,8 @@ class FirestoreAnimatedListState extends State<FirestoreAnimatedList> {
     }
   }
 
-  void _onDocumentRemoved(int index, DocumentSnapshot snapshot) {
+  void _onDocumentRemoved(
+      int index, DocumentSnapshot<Map<String, dynamic>> snapshot) {
     // The child should have already been removed from the model by now
     assert(!_model!.contains(snapshot));
     if (mounted) {
@@ -242,13 +243,14 @@ class FirestoreAnimatedListState extends State<FirestoreAnimatedList> {
   }
 
   // No animation, just update contents
-  void _onDocumentChanged(int index, DocumentSnapshot snapshot) {
+  void _onDocumentChanged(
+      int index, DocumentSnapshot<Map<String, dynamic>> snapshot) {
     if (mounted) {
       setState(() {});
     }
   }
 
-  void _onLoaded(QuerySnapshot? querySnapshot) {
+  void _onLoaded(QuerySnapshot<Map<String, dynamic>>? querySnapshot) {
     if (mounted && !_loaded) {
       setState(() {
         _loaded = true;
@@ -257,7 +259,7 @@ class FirestoreAnimatedListState extends State<FirestoreAnimatedList> {
     if (querySnapshot != null) widget.onLoaded?.call(querySnapshot);
   }
 
-  void _onValue(DocumentSnapshot snapshot) {
+  void _onValue(DocumentSnapshot<Map<String, dynamic>> snapshot) {
     _onLoaded(null);
   }
 

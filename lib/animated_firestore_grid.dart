@@ -52,7 +52,7 @@ class FirestoreAnimatedGrid extends StatefulWidget {
         super(key: key);
 
   /// A Firestore query to use to populate the animated list
-  final Query query;
+  final Query<Map<String, dynamic>> query;
 
   /// Method that gets called once the stream updates with a new QuerySnapshot
   final Function(QuerySnapshot)? onLoaded;
@@ -264,13 +264,14 @@ class FirestoreAnimatedGridState extends State<FirestoreAnimatedGrid> {
   }
 
   // No animation, just update contents
-  void _onDocumentChanged(int index, DocumentSnapshot snapshot) {
+  void _onDocumentChanged(
+      int index, DocumentSnapshot<Map<String, dynamic>> snapshot) {
     if (mounted) {
       setState(() {});
     }
   }
 
-  void _onLoaded(QuerySnapshot? querySnapshot) {
+  void _onLoaded(QuerySnapshot<Map<String, dynamic>>? querySnapshot) {
     if (mounted && !_loaded) {
       setState(() {
         _loaded = true;
@@ -279,7 +280,7 @@ class FirestoreAnimatedGridState extends State<FirestoreAnimatedGrid> {
     if (querySnapshot != null) widget.onLoaded?.call(querySnapshot);
   }
 
-  void _onValue(DocumentSnapshot snapshot) {
+  void _onValue(DocumentSnapshot<Map<String, dynamic>> snapshot) {
     _onLoaded(null);
   }
 

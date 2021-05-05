@@ -12,14 +12,14 @@ import 'firestore_list.dart';
 
 typedef Widget FirestoreAnimatedStaggeredItemBuilder(
   BuildContext context,
-  DocumentSnapshot? snapshot,
+  DocumentSnapshot<Map<String, dynamic>>? snapshot,
   Animation<double> animation,
   int index,
 );
 
 typedef StaggeredTile FirestoreStaggeredTileBuilder(
   int index,
-  DocumentSnapshot? snapshot,
+  DocumentSnapshot<Map<String, dynamic>>? snapshot,
 );
 
 /// An AnimatedList widget that is bound to a query
@@ -56,10 +56,10 @@ class FirestoreAnimatedStaggered extends StatefulWidget {
         super(key: key);
 
   /// A Firestore query to use to populate the animated list
-  final Query query;
+  final Query<Map<String, dynamic>> query;
 
   /// Method that gets called once the stream updates with a new [QuerySnapshot]
-  final Function(QuerySnapshot)? onLoaded;
+  final Function(QuerySnapshot<Map<String, dynamic>>)? onLoaded;
 
   /// Signature for a function that creates [StaggeredTile] for a given index and [DocumentSnapshot]
   final FirestoreStaggeredTileBuilder staggeredTileBuilder;
@@ -252,7 +252,8 @@ class FirestoreAnimatedStaggeredState
     }
   }
 
-  void _onDocumentRemoved(int index, DocumentSnapshot snapshot) {
+  void _onDocumentRemoved(
+      int index, DocumentSnapshot<Map<String, dynamic>> snapshot) {
     // The child should have already been removed from the model by now
     assert(!_model!.contains(snapshot));
     if (mounted) {
@@ -279,7 +280,7 @@ class FirestoreAnimatedStaggeredState
     }
   }
 
-  void _onLoaded(QuerySnapshot? querySnapshot) {
+  void _onLoaded(QuerySnapshot<Map<String, dynamic>>? querySnapshot) {
     if (mounted && !_loaded) {
       setState(() {
         _loaded = true;
